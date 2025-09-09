@@ -41,3 +41,21 @@ class TrainType(models.Model):
     def __str__(self) -> str:
         return self.name
 
+
+class Crew(models.Model):
+    class Position(models.TextChoices):
+        DRIVER = "driver", "Driver"
+        ASSISTANT_DRIVER = "assistant driver", "Assistant driver"
+        CONDUCTOR = "conductor", "Conductor"
+        SENIOR_CONDUCTOR = "senior conductor", "Senior conductor"
+        TRAIN_MANAGER = "train manager", "Train manager"
+    first_name = models.CharField(max_length=255)
+    last_name = models.CharField(max_length=255)
+    position = models.CharField(
+        max_length=20,
+        choices=Position.choices
+    )
+
+    @property
+    def full_name(self) -> str:
+        return f"{self.first_name} {self.last_name}"
