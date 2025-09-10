@@ -1,5 +1,12 @@
 from rest_framework import serializers
-from .models import Station, TrainType, Crew, Route, Train
+from .models import (
+    Station,
+    TrainType,
+    Crew,
+    Route,
+    Train,
+    Journey
+)
 
 
 class StationSerializer(serializers.ModelSerializer):
@@ -141,4 +148,79 @@ class TrainDetailSerializer(TrainSerializer):
             "cargo_num",
             "places_in_cargo",
             "train_type"
+        )
+
+
+class JourneySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Journey
+        fields = (
+            "id",
+            "route",
+            "train",
+            "crew",
+            "departure_time",
+            "arrival_time"
+        )
+
+
+class JourneyListSerializer(JourneySerializer):
+    train_name = serializers.CharField(
+        source="train.name",
+        read_only=True
+    )
+    train_type_name = serializers.CharField(
+        source="train.train_type.name",
+        read_only=True
+    )
+    route_source = serializers.CharField(
+        source="route.source.name",
+        read_only=True
+    )
+    route_destination = serializers.CharField(
+        source="route.destination.name",
+        read_only=True
+    )
+    crew = serializers.SerializerMethodField(read_only=True)
+    tickets_available = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Journey
+        fields = (
+            "id",
+            "route_source",
+            "route_destination",
+            "train_name",
+            "train_type_name",
+            "crew",
+            "departure_time",
+            "arrival_time",
+            "tickets_available"
+        )
+
+    def get_crew(self, obj):
+        return [
+            {
+                "full_name": crew.full_name,
+                "position": crew.position
+            }
+            for crew in obj.crew.all()
+        ]
+
+
+class JourneyDetailSerializer(JourneySerializer):
+    route = RouteSerializer(read_only=True)
+    train = TrainSerializer(read_only=True)
+    crew = CrewSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Journey
+        fields = (
+            "id",
+            "route",
+            "train",
+            "crew",
+            "departure_time",
+            "arrival_time"
         )
