@@ -100,6 +100,12 @@ class Route(models.Model):
             )
         super().save(*args, **kwargs)
 
+    def __str__(self) -> str:
+        return (
+            f"{self.source.name} -> {self.destination.name} "
+            f"{self.distance} km"
+        )
+
 
 class Train(models.Model):
     name = models.CharField(max_length=255, unique=True)
@@ -117,3 +123,29 @@ class Train(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+
+class Journey(models.Model):
+    route = models.ForeignKey(
+        Route,
+        related_name="journeys",
+        on_delete=models.CASCADE
+    )
+    train = models.ForeignKey(
+        Train,
+        related_name="journeys",
+        on_delete=models.CASCADE
+    )
+    crew = models.ManyToManyField(Crew, related_name="journeys")
+    departure_time = models.DateTimeField()
+    arrival_time = models.DateTimeField()
+
+    def __str__(self) -> str:
+        return (
+            f"{self.route.source.name} -> "
+            f"{self.route.destination.name} "
+            f"at {self.departure_time}"
+        )
+
+    class Meta:
+        ordering = ["-departure_time"]
