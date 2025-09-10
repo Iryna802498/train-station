@@ -4,7 +4,8 @@ from .models import (
     TrainType,
     Crew,
     Route,
-    Train
+    Train,
+    Journey
 )
 
 
@@ -13,3 +14,4 @@ admin.site.register(TrainType)
 admin.site.register(Crew)
 admin.site.register(Route)
 admin.site.register(Train)
+admin.site.register(Journey)
