@@ -2,7 +2,14 @@ from rest_framework import viewsets, mixins
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser
 from rest_framework.viewsets import GenericViewSet
-from .models import Station, TrainType, Crew, Route, Train
+from .models import (
+    Station,
+    TrainType,
+    Crew,
+    Route,
+    Train,
+    Journey
+)
 from .serializers import (
     StationSerializer,
     TrainTypeSerializer,
@@ -13,7 +20,10 @@ from .serializers import (
     RouteDetailSerializer,
     TrainSerializer,
     TrainListSerializer,
-    TrainDetailSerializer
+    TrainDetailSerializer,
+    JourneySerializer,
+    JourneyListSerializer,
+    JourneyDetailSerializer
 )
 from .permissions import IsAdminOrIfAuthenticatedReadOnly
 
@@ -105,3 +115,22 @@ class TrainViewSet(
         if self.action == "retrieve":
             return TrainDetailSerializer
         return TrainSerializer
+
+
+class JourneyViewSet(viewsets.ModelViewSet):
+    queryset = (
+        Journey.objects.select_related(
+            "route",
+            "train",
+            "train__train_type")
+        .prefetch_related("crew")
+    )
+    serializer_class = JourneySerializer
+    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return JourneyListSerializer
+        if self.action == "retrieve":
+            return JourneyDetailSerializer
+        return JourneySerializer
