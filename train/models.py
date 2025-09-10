@@ -1,5 +1,6 @@
 import os
 import uuid
+from math import radians, sin, cos, sqrt, asin
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.text import slugify
@@ -59,3 +60,42 @@ class Crew(models.Model):
     @property
     def full_name(self) -> str:
         return f"{self.first_name} {self.last_name}"
+
+
+def calculate_distance(
+        source_latitude: float,
+        source_longitude: float,
+        destination_latitude: float,
+        destination_longitude: float
+    ) -> int:
+    earth_radius = 6371
+    delta_lat = radians(destination_latitude - source_latitude)
+    delta_lon = radians(destination_longitude - source_longitude)
+    haversine_formula = (
+        sin(delta_lat / 2) ** 2 + cos(radians(source_latitude))
+        * cos(radians(destination_latitude)) * sin(delta_lon / 2) ** 2)
+    central_angle = 2 * asin(sqrt(haversine_formula))
+    distance = round(earth_radius * central_angle)
+    return distance
+
+
+class Route(models.Model):
+    source = models.ForeignKey(
+        Station,
+        related_name="routes_from",
+        on_delete=models.CASCADE
+    )
+    destination = models.ForeignKey(
+        Station,
+        related_name="routes_to",
+        on_delete=models.CASCADE
+    )
+    distance = models.PositiveIntegerField(editable=False)
+
+    def save(self, *args, **kwargs):
+        if self.source and self.destination:
+            self.distance = calculate_distance(
+                self.source.latitude, self.source.longitude,
+                self.destination.latitude, self.destination.longitude
+            )
+        super().save(*args, **kwargs)
