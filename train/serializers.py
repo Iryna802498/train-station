@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Station, TrainType, Crew, Route
+from .models import Station, TrainType, Crew, Route, Train
 
 
 class StationSerializer(serializers.ModelSerializer):
@@ -91,4 +91,54 @@ class RouteDetailSerializer(RouteSerializer):
             "source",
             "destination",
             "distance"
+        )
+
+
+class TrainSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Train
+        fields = (
+            "id",
+            "name",
+            "cargo_num",
+            "places_in_cargo",
+            "train_type"
+        )
+
+
+class TrainListSerializer(TrainSerializer):
+    train_type_name = serializers.CharField(
+        source="train_type.name",
+        read_only=True
+    )
+    train_type_image = serializers.ImageField(
+        source="train_type.image",
+        read_only=True
+    )
+
+    class Meta:
+        model = Train
+        fields = (
+            "id",
+            "name",
+            "cargo_num",
+            "places_in_cargo",
+            "train_type_name",
+            "train_type_image",
+            "total_places"
+        )
+
+
+class TrainDetailSerializer(TrainSerializer):
+    train_type = TrainTypeSerializer(read_only=True)
+
+    class Meta:
+        model = Train
+        fields = (
+            "id",
+            "name",
+            "cargo_num",
+            "places_in_cargo",
+            "train_type"
         )
