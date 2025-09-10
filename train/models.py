@@ -110,3 +110,10 @@ class Train(models.Model):
         related_name="trains",
         on_delete=models.CASCADE
     )
+
+    @property
+    def total_places(self) -> int:
+        return self.cargo_num * self.places_in_cargo
+
+    def __str__(self) -> str:
+        return self.name
