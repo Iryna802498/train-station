@@ -1,7 +1,7 @@
 from rest_framework import viewsets, mixins
 from rest_framework.viewsets import GenericViewSet
-from .models import Station, TrainType
-from .serializers import StationSerializer, TrainTypeSerializers
+from .models import Station, TrainType, Crew
+from .serializers import StationSerializer, TrainTypeSerializers, CrewSerializer
 from .permissions import IsAdminOrIfAuthenticatedReadOnly
 
 
@@ -22,4 +22,14 @@ class TrainTypeViewSet(
 ):
     queryset = TrainType.objects.all()
     serializer_class = TrainTypeSerializers
+    permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
+
+
+class CrewViewSet(
+    mixins.CreateModelMixin,
+    mixins.ListModelMixin,
+    GenericViewSet
+):
+    queryset = Crew.objects.all()
+    serializer_class = CrewSerializer
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
