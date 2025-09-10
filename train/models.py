@@ -24,7 +24,7 @@ class Station(models.Model):
 
 def train_type_image_file_path(instance, filename):
     _, extension = os.path.splitext(filename)
-    filename = f"{slugify(instance.title)}-{uuid.uuid4()}{extension}"
+    filename = f"{slugify(instance.name)}-{uuid.uuid4()}{extension}"
 
     return os.path.join("uploads/trains/", filename)
 
@@ -99,3 +99,14 @@ class Route(models.Model):
                 self.destination.latitude, self.destination.longitude
             )
         super().save(*args, **kwargs)
+
+
+class Train(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    cargo_num = models.IntegerField()
+    places_in_cargo = models.IntegerField()
+    train_type = models.ForeignKey(
+        TrainType,
+        related_name="trains",
+        on_delete=models.CASCADE
+    )

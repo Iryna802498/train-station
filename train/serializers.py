@@ -14,13 +14,23 @@ class StationSerializer(serializers.ModelSerializer):
         )
 
 
-class TrainTypeSerializers(serializers.ModelSerializer):
+class TrainTypeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TrainType
         fields = (
             "id",
             "name",
+            "image"
+        )
+
+
+class TrainTypeImageSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = TrainType
+        fields = (
+            "id",
             "image"
         )
 
