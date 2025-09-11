@@ -1,3 +1,6 @@
+from datetime import datetime
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from django.db.models import F, Count
 from rest_framework import viewsets, mixins
 from rest_framework.decorators import action
@@ -138,12 +141,95 @@ class JourneyViewSet(viewsets.ModelViewSet):
     serializer_class = JourneySerializer
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
 
+    def get_queryset(self):
+        source_name = self.request.query_params.get(
+            "source_name"
+        )
+        destination_name = self.request.query_params.get(
+            "destination_name"
+        )
+        train_name = self.request.query_params.get(
+            "train_name"
+        )
+        departure_time = self.request.query_params.get(
+            "departure_time"
+        )
+        arrival_time = self.request.query_params.get(
+            "arrival_time"
+        )
+        queryset = self.queryset
+        if source_name:
+            queryset = queryset.filter(
+                route__source__name__icontains=source_name
+            )
+        if destination_name:
+            queryset = queryset.filter(
+                route__destination__name__icontains=destination_name
+            )
+        if train_name:
+            queryset = queryset.filter(
+                train__name__icontains=train_name
+            )
+        if departure_time:
+            departure_time = datetime.strptime(
+                departure_time, "%Y-%m-%d"
+            ).date()
+            queryset = queryset.filter(
+                departure_time__date=departure_time
+            )
+        if arrival_time:
+            arrival_time = datetime.strptime(
+                arrival_time, "%Y-%m-%d"
+            ).date()
+            queryset = queryset.filter(
+                arrival_time__date=arrival_time
+            )
+        return queryset
+
     def get_serializer_class(self):
         if self.action == "list":
             return JourneyListSerializer
         if self.action == "retrieve":
             return JourneyDetailSerializer
         return JourneySerializer
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "source_name",
+                type=OpenApiTypes.STR,
+                description="Filter by source name (ex. ?source_name='Kiev')",
+            ),
+            OpenApiParameter(
+                "destination_name",
+                type=OpenApiTypes.STR,
+                description="Filter by destination name (ex. ?destination_name='Kherson')",
+            ),
+            OpenApiParameter(
+                "train_name",
+                type=OpenApiTypes.STR,
+                description="Filter by train name (ex. ?train_name='Intercity 723')",
+            ),
+            OpenApiParameter(
+                "departure_time",
+                type=OpenApiTypes.DATE,
+                description=(
+                    "Filter by departure time for Journey "
+                    "(ex. ?departure_time=2025-09-23)"
+                ),
+            ),
+            OpenApiParameter(
+                "arrival_time",
+                type=OpenApiTypes.DATE,
+                description=(
+                    "Filter by arrival time for Journey "
+                    "(ex. ?arrival_time=2025-09-24)"
+                ),
+            ),
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
 
 class OrderViewSet(
