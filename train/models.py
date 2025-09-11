@@ -2,8 +2,10 @@ import os
 import uuid
 from math import radians, sin, cos, sqrt, asin
 from django.db import models
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.text import slugify
+from train_station import settings
 
 
 class Station(models.Model):
@@ -149,3 +151,71 @@ class Journey(models.Model):
 
     class Meta:
         ordering = ["-departure_time"]
+
+
+class Order(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="orders",
+        on_delete=models.CASCADE
+    )
+
+    def __str__(self) -> str:
+        return str(self.created_at)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+
+class Ticket(models.Model):
+    cargo = models.IntegerField()
+    seat = models.IntegerField()
+    journey = models.ForeignKey(
+        Journey,
+        related_name="tickets",
+        on_delete=models.CASCADE
+    )
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        related_name="tickets"
+    )
+
+    @staticmethod
+    def validate_ticket(cargo, seat, train, error_to_raise):
+        for ticket_attr_value, ticket_attr_name, train_attr_name in [
+            (cargo, "cargo", "cargo_num"),
+            (seat, "seat", "places_in_cargo"),
+        ]:
+            max_value = getattr(train, train_attr_name)
+            if not (1 <= ticket_attr_value <= max_value):
+                raise error_to_raise(
+                    {
+                        ticket_attr_name: f"{ticket_attr_name} "
+                        f"number must be in available range: "
+                        f"(1, {train_attr_name}): "
+                        f"(1, {max_value})"
+                    }
+                )
+
+    def clean(self):
+        Ticket.validate_ticket(
+            self.cargo,
+            self.seat,
+            self.journey.train,
+            ValidationError,
+        )
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
+    def __str__(self) -> str:
+        return (
+            f"{self.journey.train.name} (cargo: {self.cargo}, seat: {self.seat})"
+        )
+
+    class Meta:
+        unique_together = ("train", "cargo", "seat")
+        ordering = ["cargo", "seat"]
