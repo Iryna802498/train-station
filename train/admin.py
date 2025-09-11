@@ -5,7 +5,9 @@ from .models import (
     Crew,
     Route,
     Train,
-    Journey
+    Journey,
+    Order,
+    Ticket
 )
 
 
@@ -15,3 +17,5 @@ admin.site.register(Crew)
 admin.site.register(Route)
 admin.site.register(Train)
 admin.site.register(Journey)
+admin.site.register(Order)
+admin.site.register(Ticket)
