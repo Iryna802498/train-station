@@ -1,6 +1,7 @@
+from django.db.models import F, Count
 from rest_framework import viewsets, mixins
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.viewsets import GenericViewSet
 from .models import (
     Station,
@@ -8,7 +9,8 @@ from .models import (
     Crew,
     Route,
     Train,
-    Journey
+    Journey,
+    Order
 )
 from .serializers import (
     StationSerializer,
@@ -23,7 +25,9 @@ from .serializers import (
     TrainDetailSerializer,
     JourneySerializer,
     JourneyListSerializer,
-    JourneyDetailSerializer
+    JourneyDetailSerializer,
+    OrderSerializer,
+    OrderListSerializer
 )
 from .permissions import IsAdminOrIfAuthenticatedReadOnly
 
@@ -124,6 +128,12 @@ class JourneyViewSet(viewsets.ModelViewSet):
             "train",
             "train__train_type")
         .prefetch_related("crew")
+        .annotate(
+            tickets_available=(
+                F("train__cargo_num") * F("train__places_in_cargo")
+                - Count("tickets", distinct=True)
+            )
+        )
     )
     serializer_class = JourneySerializer
     permission_classes = (IsAdminOrIfAuthenticatedReadOnly,)
@@ -134,3 +144,32 @@ class JourneyViewSet(viewsets.ModelViewSet):
         if self.action == "retrieve":
             return JourneyDetailSerializer
         return JourneySerializer
+
+
+class OrderViewSet(
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    GenericViewSet,
+):
+    queryset = (Order.objects.select_related(
+        "user",
+        "tickets__journey__train",
+        "tickets__journey__route__source",
+        "tickets__journey__route__destination"
+    )
+    .prefetch_related("tickets__journey__crew")
+    )
+    serializer_class = OrderSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self):
+        return Order.objects.filter(user=self.request.user)
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return OrderListSerializer
+
+        return OrderSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
