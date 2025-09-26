@@ -34,6 +34,7 @@ def train_type_image_file_path(instance, filename):
 class TrainType(models.Model):
     name = models.CharField(max_length=255, unique=True)
     image = models.ImageField(
+        blank=True,
         null=True,
         upload_to=train_type_image_file_path
     )
@@ -63,13 +64,16 @@ class Crew(models.Model):
     def full_name(self) -> str:
         return f"{self.first_name} {self.last_name}"
 
+    def __str__(self) -> str:
+        return f"{self.first_name} {self.last_name}"
+
 
 def calculate_distance(
-        source_latitude: float,
-        source_longitude: float,
-        destination_latitude: float,
-        destination_longitude: float
-    ) -> int:
+    source_latitude: float,
+    source_longitude: float,
+    destination_latitude: float,
+    destination_longitude: float
+) -> int:
     earth_radius = 6371
     delta_lat = radians(destination_latitude - source_latitude)
     delta_lon = radians(destination_longitude - source_longitude)
@@ -139,12 +143,25 @@ class Journey(models.Model):
         on_delete=models.CASCADE
     )
     crew = models.ManyToManyField(Crew, related_name="journeys")
+    number_train = models.PositiveIntegerField()
     departure_time = models.DateTimeField()
     arrival_time = models.DateTimeField()
+    STATUS_CHOICES = [
+        ("scheduled", "Scheduled"),
+        ("in_progress", "In Progress"),
+        ("completed", "Completed"),
+        ("cancelled", "Cancelled"),
+    ]
+    status = models.CharField(
+        max_length=255,
+        choices=STATUS_CHOICES,
+        default="scheduled"
+    )
 
     def __str__(self) -> str:
         return (
-            f"{self.route.source.name} -> "
+            f"{self.number_train} "
+            f"{self.route.source.name} - "
             f"{self.route.destination.name} "
             f"at {self.departure_time}"
         )
@@ -213,9 +230,10 @@ class Ticket(models.Model):
 
     def __str__(self) -> str:
         return (
-            f"{self.journey.train.name} (cargo: {self.cargo}, seat: {self.seat})"
+            f"{self.journey.train.name} "
+            f"(cargo: {self.cargo}, seat: {self.seat})"
         )
 
     class Meta:
-        unique_together = ("train", "cargo", "seat")
+        unique_together = ("journey", "cargo", "seat")
         ordering = ["cargo", "seat"]
