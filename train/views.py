@@ -2,7 +2,8 @@ from datetime import datetime
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from django.db.models import F, Count
-from rest_framework import viewsets, mixins
+from rest_framework import viewsets, mixins, status
+from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.viewsets import GenericViewSet
@@ -193,22 +194,34 @@ class JourneyViewSet(viewsets.ModelViewSet):
             return JourneyDetailSerializer
         return JourneySerializer
 
+    def destroy(self, request, *args, **kwargs):
+        return Response(
+            {"detail": "Deletion not allowed. Use cancel action instead."},
+            status=status.HTTP_405_METHOD_NOT_ALLOWED
+        )
+
     @extend_schema(
         parameters=[
             OpenApiParameter(
                 "source_name",
                 type=OpenApiTypes.STR,
-                description="Filter by source name (ex. ?source_name='Kiev')",
+                description=(
+                    "Filter by source name "
+                    "(ex. ?source_name='Kiev')"),
             ),
             OpenApiParameter(
                 "destination_name",
                 type=OpenApiTypes.STR,
-                description="Filter by destination name (ex. ?destination_name='Kherson')",
+                description=(
+                    "Filter by destination name "
+                    "(ex. ?destination_name='Kherson')"),
             ),
             OpenApiParameter(
                 "train_name",
                 type=OpenApiTypes.STR,
-                description="Filter by train name (ex. ?train_name='Intercity 723')",
+                description=(
+                    "Filter by train name "
+                    "(ex. ?train_name='Intercity 723')"),
             ),
             OpenApiParameter(
                 "departure_time",
@@ -237,13 +250,15 @@ class OrderViewSet(
     mixins.CreateModelMixin,
     GenericViewSet,
 ):
-    queryset = (Order.objects.select_related(
-        "user",
-        "tickets__journey__train",
-        "tickets__journey__route__source",
-        "tickets__journey__route__destination"
-    )
-    .prefetch_related("tickets__journey__crew")
+    queryset = (
+        Order.objects.select_related(
+            "user",
+            "tickets__journey__train",
+            "tickets__journey__route__source",
+            "tickets__journey__route__destination"
+        ).prefetch_related(
+            "tickets__journey__crew"
+        )
     )
     serializer_class = OrderSerializer
     permission_classes = (IsAuthenticated,)
