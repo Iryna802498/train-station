@@ -34,6 +34,7 @@ class TrainTypeSerializer(serializers.ModelSerializer):
             "name",
             "image"
         )
+        read_only_fields = ("id", "image",)
 
 
 class TrainTypeImageSerializer(serializers.ModelSerializer):
@@ -44,6 +45,7 @@ class TrainTypeImageSerializer(serializers.ModelSerializer):
             "id",
             "image"
         )
+        read_only_fields = ("id",)
 
 
 class CrewSerializer(serializers.ModelSerializer):
@@ -156,6 +158,10 @@ class TrainDetailSerializer(TrainSerializer):
 
 
 class JourneySerializer(serializers.ModelSerializer):
+    crew = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Crew.objects.all()
+    )
 
     class Meta:
         model = Journey
@@ -163,9 +169,11 @@ class JourneySerializer(serializers.ModelSerializer):
             "id",
             "route",
             "train",
+            "number_train",
             "crew",
             "departure_time",
-            "arrival_time"
+            "arrival_time",
+            "status"
         )
 
 
@@ -197,10 +205,12 @@ class JourneyListSerializer(JourneySerializer):
             "route_destination",
             "train_name",
             "train_type_name",
+            "number_train",
             "crew",
             "departure_time",
             "arrival_time",
-            "tickets_available"
+            "tickets_available",
+            "status"
         )
 
     def get_crew(self, obj):
@@ -245,8 +255,8 @@ class TicketSeatsSerializer(TicketSerializer):
 
 
 class JourneyDetailSerializer(JourneySerializer):
-    route = RouteSerializer(read_only=True)
-    train = TrainSerializer(read_only=True)
+    route = RouteListSerializer(read_only=True)
+    train = TrainListSerializer(read_only=True)
     crew = CrewSerializer(many=True, read_only=True)
     taken_places = TicketSeatsSerializer(
         source="tickets", many=True, read_only=True
@@ -258,10 +268,12 @@ class JourneyDetailSerializer(JourneySerializer):
             "id",
             "route",
             "train",
+            "number_train",
             "crew",
             "departure_time",
             "arrival_time",
-            "taken_places"
+            "taken_places",
+            "status"
         )
 
 
@@ -270,7 +282,11 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ("id", "tickets", "created_at")
+        fields = (
+            "id",
+            "tickets",
+            "created_at"
+        )
 
     def create(self, validated_data):
         with transaction.atomic():
@@ -283,3 +299,11 @@ class OrderSerializer(serializers.ModelSerializer):
 
 class OrderListSerializer(OrderSerializer):
     tickets = TicketListSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Order
+        fields = (
+            "id",
+            "tickets",
+            "created_at"
+        )
