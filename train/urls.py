@@ -8,7 +8,7 @@ from .views import (
     TrainViewSet,
     JourneyViewSet,
     OrderViewSet
-    )
+)
 
 
 router = routers.DefaultRouter()
