@@ -19,7 +19,7 @@ For Windows:
 
 ```bash
 set POSTGRES_DB=your_db_name
-set setPOSTGRES_USER=your_db_user
+set POSTGRES_USER=your_db_user
 set POSTGRES_PASSWORD=your_db_password
 set POSTGRES_PORT=5432
 set POSTGRES_HOST=your_db_host
