@@ -31,7 +31,7 @@ For Linux/macOS:
 
 ```bash
 export POSTGRES_DB=your_db_name
-export setPOSTGRES_USER=your_db_user
+export POSTGRES_USER=your_db_user
 export POSTGRES_PASSWORD=your_db_password
 export POSTGRES_PORT=5432
 export POSTGRES_HOST=your_db_host
